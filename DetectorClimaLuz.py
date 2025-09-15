@@ -96,107 +96,138 @@ def leer_opcion_consola():
         print("Error: Ingrese un número válido")
         return -1 # Retorna -1 para indicar que hubo una entrada inválida
 
-# Función genérica para mostrar gráficas en tiempo real durante 20 segundos
-def mostrar_grafica(tipo_sensor, funcion_lectura, rango_min, rango_max, unidad, delay=0.5):
-    """
-    Función genérica para mostrar gráficas de sensores en tiempo real
-    
-    Parámetros:
-    - tipo_sensor: String con el nombre del sensor para mostrar en pantalla
-    - funcion_lectura: Función que lee el valor del sensor
-    - rango_min: Valor mínimo del rango del sensor
-    - rango_max: Valor máximo del rango del sensor  
-    - unidad: String con la unidad de medida (ej: "%", "C", "°C")
-    - delay: Tiempo de pausa entre lecturas en segundos
-    """
-    print(f"Monitoreando {tipo_sensor.lower()}...")
+# Función para mostrar gráfica en tiempo real de la luminosidad durante 20 segundos
+def mostrar_grafica_luminosidad():
+    print("Monitoreando luminosidad...")
     inicio = ticks_ms() # Marca el tiempo de inicio en milisegundos
     buffer_local = [32] * oled_ancho # Buffer local para almacenar los datos de la gráfica
     
     # Bucle que se ejecuta durante 20 segundos (20000 ms)
-    while ticks_diff(ticks_ms(), inicio) < 20000:
-        valor = funcion_lectura() # Lee el valor actual del sensor usando la función proporcionada
+    while ticks_diff(ticks_ms(), inicio) < 20000:  
+        luminosidad = leer_luminosidad() # Lee el valor actual de luminosidad
         
-        # Verifica que la lectura sea válida (no None)
-        if valor is not None:
-            # Limita el valor al rango especificado y lo mapea a coordenadas y (10-54)
-            # Los valores más altos se mapean a valores de y más pequeños (parte superior de la gráfica)
-            valor_limitado = min(max(valor, rango_min), rango_max)
-            y = map_value(valor_limitado, rango_min, rango_max, 54, 10)
+        # Convierte el porcentaje de luminosidad (0-100%) a coordenadas y de la pantalla (10-54)
+        # Los valores más altos se mapean a valores de y más pequeños (parte superior de la gráfica)
+        y = map_value(luminosidad, 0, 100, 54, 10)
+        
+        # Actualiza buffer circular: se agrega el nuevo valor al final y elimina el primero
+        buffer_local.append(y)
+        buffer_local.pop(0)
+        
+        oled.fill(0) # Limpia la pantalla
+        oled.text("LUMINOSIDAD", 0, 0) # Título de la gráfica
+        oled.text(str(luminosidad) + "%", 90, 0) # Muestra el valor actual de luminosidad
+        
+        # Ejes de la gráfica
+        oled.hline(0, 54, oled_ancho, 1)  # Eje x en la parte inferior
+        oled.vline(0, 10, 45, 1)          # Eje y en el lado izquierdo
+        
+        # Etiquetas de escala en el eje y
+        oled.text("100", 105, 10) # Valor máximo (100%) en la parte superior
+        oled.text("0", 110, 50) # Valor mínimo (0%) en la parte inferior
+        
+        # Dibuja la gráfica conectando puntos consecutivos con líneas
+        for x in range(1, oled_ancho):
+            oled.line(x-1, buffer_local[x-1], x, buffer_local[x], 1)
+        
+        oled.show() # Actualiza la pantalla para mostrar todos los elementos dibujados
+        # Muestra también en consola el valor de luminosidad
+        print(f"Luminosidad: {luminosidad}%")
+        sleep(0.5) # Pausa de 500ms entre lecturas
+    
+    print("Monitoreo de luminosidad completado.")
+
+# Función para mostrar gráfica en tiempo real de la temperatura durante 20 segundos
+def mostrar_grafica_temperatura():
+    print("Monitoreando temperatura...")
+    inicio = ticks_ms() # Marca el tiempo de inicio
+    buffer_local = [32] * oled_ancho # Buffer local para almacenar los datos de la gráfica
+    
+    # Bucle que se ejecuta durante 20 segundos (20000 ms)
+    while ticks_diff(ticks_ms(), inicio) < 20000:  
+        temperatura, _ = leer_temperatura_humedad() # Lee solo la temperatura del DHT11
+        
+        if temperatura is not None: # Verifica que la lectura fue exitosa
+            # Mapea temperatura (0-50°C) a coordenadas y (10-54)
+            y = map_value(min(max(temperatura, 0), 50), 0, 50, 54, 10)
             
             # Actualiza buffer circular: se agrega el nuevo valor al final y elimina el primero
             buffer_local.append(y)
             buffer_local.pop(0)
             
-            # Limpia la pantalla y dibuja la interfaz
-            oled.fill(0)
-            oled.text(tipo_sensor.upper(), 0, 0) # Título de la gráfica en mayúsculas
+            oled.fill(0) # Limpia la pantalla 
+            oled.text("TEMPERATURA", 0, 0) # Título de la gráfica
+            oled.text("{:.1f}C".format(temperatura), 90, 0) # Muestra el valor actual de temperatura
             
-            # Formatea y muestra el valor actual según el tipo de dato
-            if isinstance(valor, float):
-                texto_valor = "{:.1f}{}".format(valor, unidad) # Un decimal para flotantes
-            else:
-                texto_valor = "{}{}".format(valor, unidad) # Sin decimales para enteros
-                
-            # Posiciona el texto del valor en la esquina superior derecha
-            pos_x = 128 - len(texto_valor) * 8 - 5  # Calcula posición para alinear a la derecha
-            oled.text(texto_valor, max(pos_x, 70), 0) # Mínimo en posición 70
+            # Ejes de la gráfica
+            oled.hline(0, 54, oled_ancho, 1)  # Eje x en la parte inferior
+            oled.vline(0, 10, 45, 1)          # Eje y en el lado izquierdo
             
-            # Dibuja los ejes de la gráfica
-            oled.hline(0, 54, oled_ancho, 1)  # Eje X (horizontal) en la parte inferior
-            oled.vline(0, 10, 45, 1)          # Eje Y (vertical) en el lado izquierdo
-            
-            # Etiquetas de escala en el eje Y
-            oled.text(str(rango_max), 105, 10) # Valor máximo en la parte superior
-            oled.text(str(rango_min), 110, 50) # Valor mínimo en la parte inferior
+            # Etiquetas de escala en el eje y
+            oled.text("50", 105, 10) # Valor máximo (50°C) en la parte superior
+            oled.text("0", 110, 50) # Valor mínimo (0°C) en la parte inferior
             
             # Dibuja la gráfica conectando puntos consecutivos con líneas
             for x in range(1, oled_ancho):
                 oled.line(x-1, buffer_local[x-1], x, buffer_local[x], 1)
             
-            # Actualiza la pantalla para mostrar todos los elementos dibujados
-            oled.show()
-            
-            # Muestra el valor también en la consola
-            if isinstance(valor, float):
-                print(f"{tipo_sensor}: {valor:.1f}{unidad}")
-            else:
-                print(f"{tipo_sensor}: {valor}{unidad}")
-                
+            # Muestra también en consola el valor de temperatura
+            print(f"Temperatura: {temperatura:.1f}°C")
         else:
-            # Maneja el caso de error en la lectura del sensor
-            oled.fill(0)
-            oled.text("Error DHT11", 20, 30) # Mensaje de error específico para DHT11
-            oled.show()
-            print(f"Error leyendo {tipo_sensor.lower()}")
+            oled.fill(0) # Limpia la pantalla
+            oled.text("Error DHT11", 20, 30) # Mensaje de error en pantalla
+            print("Error leyendo DHT11") # Mensaje de error en consola
         
-        sleep(delay) # Pausa entre lecturas según el sensor
+        oled.show() # Actualiza la pantalla para mostrar todos los elementos dibujados
+        sleep(1.0)  # Lectura más lenta para DHT11 
     
-    print(f"Monitoreo de {tipo_sensor.lower()} completado.")
+    print("Monitoreo de temperatura completado.")
 
-# Funciones auxiliares para extraer valores específicos de sensores
-def obtener_solo_temperatura():
-    """Función auxiliar que retorna solo la temperatura del DHT11"""
-    temperatura, _ = leer_temperatura_humedad()
-    return temperatura
-
-def obtener_solo_humedad():
-    """Función auxiliar que retorna solo la humedad del DHT11"""
-    _, humedad = leer_temperatura_humedad()
-    return humedad
-
-# Funciones simplificadas que usan la función genérica
-def mostrar_grafica_luminosidad():
-    """Muestra gráfica de luminosidad usando la función genérica"""
-    mostrar_grafica("Luminosidad", leer_luminosidad, 0, 100, "%", 0.5)
-
-def mostrar_grafica_temperatura():
-    """Muestra gráfica de temperatura usando la función genérica"""
-    mostrar_grafica("Temperatura", obtener_solo_temperatura, 0, 50, "C", 1.0)
-
+# Función para mostrar gráfica en tiempo real de la humedad durante 20 segundos
 def mostrar_grafica_humedad():
-    """Muestra gráfica de humedad usando la función genérica"""
-    mostrar_grafica("Humedad", obtener_solo_humedad, 0, 100, "%", 1.0)
+    print("Monitoreando humedad...")
+    inicio = ticks_ms() # Marca el tiempo de inicio
+    buffer_local = [32] * oled_ancho # Buffer local para almacenar los datos de la gráfica
+    
+    # Bucle que se ejecuta durante 20 segundos (20000 ms)
+    while ticks_diff(ticks_ms(), inicio) < 20000:
+        _, humedad = leer_temperatura_humedad() # Lee solo la humedad del DHT11
+        
+        if humedad is not None: # Verifica que la lectura fue exitosa
+            # Mapea humedad (0-100%) a coordenadas y (10-54)
+            y = map_value(humedad, 0, 100, 54, 10)
+            
+             # Actualiza buffer circular: se agrega el nuevo valor al final y elimina el primero
+            buffer_local.append(y) 
+            buffer_local.pop(0)
+            
+            oled.fill(0) # Limpia la pantalla
+            oled.text("HUMEDAD", 0, 0) # Título de la gráfica
+            oled.text("{:.1f}%".format(humedad), 70, 0) # Muestra el valor actual de humedad
+            
+            # Ejes de la gráfica
+            oled.hline(0, 54, oled_ancho, 1)  # Eje x en la parte inferior
+            oled.vline(0, 10, 45, 1)          # Eje y en el lado izquierdo
+            
+            # Etiquetas de escala en el eje y
+            oled.text("100", 100, 10) # Valor máximo (100%) en la parte superior
+            oled.text("0", 110, 50) # Valor mínimo (0%) en la parte inferior
+            
+            # Dibuja la gráfica conectando puntos consecutivos con líneas
+            for x in range(1, oled_ancho):
+                oled.line(x-1, buffer_local[x-1], x, buffer_local[x], 1)
+            
+            # Muestra también en consola el valor de humedad
+            print(f"Humedad: {humedad:.1f}%")
+        else:
+            oled.fill(0) # Limpia la pantalla
+            oled.text("Error DHT11", 20, 30) # Mensaje de error en pantalla
+            print("Error leyendo DHT11") # Mensaje de error en consola
+        
+        oled.show() # Actualiza la pantalla para mostrar todos los elementos dibujados
+        sleep(1.0)  # Lectura más lenta para DHT11
+    
+    print("Monitoreo de humedad completado.")
 
 # Función para mostrar información del equipo y el logo del Tecnológico durante 20 segundos
 def mostrar_integrantes():
