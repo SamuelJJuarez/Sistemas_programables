@@ -91,9 +91,9 @@ def imprimir_logo():
             for bit in range(8):
                 # Extrae el valor del bit específico usando desplazamiento de bits y operación AND
                 pixel = (byte >> (7 - bit)) & 1
-            # Dibuja el píxel en la posición (x, y) con el valor extraído (0 para apagado, 1 para encendido)
-            oled.pixel(x, y, pixel)
-        x += 1 # Incrementa la posición horizontal para el siguiente píxel
+                # Dibuja el píxel en la posición (x, y) con el valor extraído (0 para apagado, 1 para encendido)
+                oled.pixel(x, y, pixel)
+                x += 1 # Incrementa la posición horizontal para el siguiente píxel
     oled.show() # Actualiza la pantalla para mostrar el logo
     time.sleep(5) # Pausa de 5 segundos para que el logo sea visible
 
@@ -104,7 +104,7 @@ def mostrar_info():
     oled.text('Equipo:', 0, 20)
     oled.text('Samuel J. Juarez B.', 0, 30)
     oled.text('Ivan A. Cadena L.', 0, 40)
-    oled.text('15/09/2025', 0, 50)
+    oled.text('22/09/2025', 0, 50)
     oled.show() # Actualiza la pantalla para mostrar la información
     time.sleep(5) # Pausa de 5 segundos para que la información sea visible
 

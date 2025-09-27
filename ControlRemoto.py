@@ -17,26 +17,23 @@ from logo import LOGO # Importa el logo desde el archivo logo.py
 
 # Diccionario que mapea los códigos hexadecimales de los botones del control remoto a sus nombres descriptivos
 buttons = {
-    0xa2:"POWER", # Botón de encendido/apagado
-    0xe2:"MENU", # Botón de menú
-    0x22:"TEST", # Botón de prueba
-    0x20:"PLUS", # Botón de incremento
-    0xc2:"BACK", # Botón de retroceso
-    0xe0:"PREV", # Botón de anterior
-    0xa8:"PLAY", # Botón de reproducción/pausa
-    0x90:"NEXT", # Botón de siguiente
-    0x68:"0", # Botón numérico 0
-    0x98:"MINUS", # Botón de decremento
-    0xb0:"C", # Botón C (cancelar)
-    0x30:"1", # Botón numérico 1
-    0x18:"2", # Botón numérico 2
-    0x7a:"3", # Botón numérico 3
-    0x10:"4", # Botón numérico 4
-    0x38:"5", # Botón numérico 5
-    0x5a:"6", # Botón numérico 6
-    0x42:"7", # Botón numérico 7
-    0x4a:"8", # Botón numérico 8
-    0x52:"9", # Botón numérico 9
+    0x45:"1", # Código del botón "1"
+    0x46:"2", # Código del botón "2"
+    0x47:"3", # Código del botón "3"
+    0x44:"4", # Código del botón "4"
+    0x40:"5", # Código del botón "5"
+    0x43:"6", # Código del botón "6"
+    0x7:"7", # Código del botón "7"
+    0x15:"8", # Código del botón "8"
+    0x9:"9", # Código del botón "9"
+    0x19:"0", # Código del botón "0"
+    0x16:"*", # Código del botón "*"
+    0x18:"UP", # Código de la flecha hacia arriba
+    0x52:"DOWN", # Código de la flecha hacia abajo
+    0xd:"#", # Código del botón "#"
+    0x1c:"OK", # Código del botón "OK"
+    0x8:"LEFT", # Código de la flecah izquierda 
+    0x5a:"RGHT" # Código de la flecha derecha
 }
 
 # Configuración del I2C con los pines GPIO18 (SCL, línea de reloj) y GPI19 (SDA, línea de datos)
@@ -134,19 +131,19 @@ def show_icon(data):
     # Limpia la pantalla
     oled.fill(0)
 
-    # Verifica si el botón presionado no es PREV ni NEXT
-    if buttons[data] != "PREV" and buttons[data] != "NEXT":
+    # Verifica si el botón presionado no es DOWN ni UP
+    if buttons[data] != "DOWN" and buttons[data] != "UP":
         # Dibuja el ícono con la escala actual sin modificarla
         draw_symbol(oled, 0, 0, scale_matrix(icon, scale))
         oled.show()
         return # Sale de la función sin cambiar la escala
 
-    # Manejo del botón NEXT: incrementa la escala si hay espacio en pantalla
-    if buttons[data] == "NEXT":
+    # Manejo del botón UP: incrementa la escala si hay espacio en pantalla
+    if buttons[data] == "UP":
         scale = scale + 1 if (len(icon)*scale) < 64 else scale
 
-    # Manejo del botón PREV: decrementa la escala con límite mínimo de 1
-    if buttons[data] == "PREV":
+    # Manejo del botón DOWN: decrementa la escala con límite mínimo de 1
+    if buttons[data] == "DOWN":
         scale = scale - 1 if scale > 1 else scale
 
     # Dibuja el ícono con la nueva escala calculada
@@ -177,9 +174,9 @@ def imprimir_logo():
             for bit in range(8):
                 # Extrae el valor del bit específico usando desplazamiento de bits y operación AND
                 pixel = (byte >> (7 - bit)) & 1
-            # Dibuja el píxel en la posición (x, y) con el valor extraído (0 para apagado, 1 para encendido)
-            oled.pixel(x, y, pixel)
-        x += 1 # Incrementa la posición horizontal para el siguiente píxel
+                # Dibuja el píxel en la posición (x, y) con el valor extraído (0 para apagado, 1 para encendido)
+                oled.pixel(x, y, pixel)
+                x += 1 # Incrementa la posición horizontal para el siguiente píxel
     oled.show() # Actualiza la pantalla para mostrar el logo
 
 # Función para mostrar mensaje de despedida al salir del programa
@@ -198,12 +195,16 @@ def ir_callback(data, addr, ctrl):
     # Variable global para guardar la opción
     global opcion
 
+    # Verifica si el código recibido es inválido
+    if data == -0x1:
+        return # Sale de la función si el código es inválido
+
     # Si estamos en el menú principal, guarda la opción seleccionada
     if opcion == "0": 
         opcion = buttons[data] # Convierte el código a nombre de botón
 
-    # Manejo del botón BACK: regresa al menú principal desde cualquier opción
-    if buttons[data] == "BACK":
+    # Manejo del botón *: regresa al menú principal desde cualquier opción
+    if buttons[data] == "*":
         opcion = "0"
         menu() # Muestra el menú principal
         return # Sale de la función
@@ -220,13 +221,10 @@ def ir_callback(data, addr, ctrl):
 
     # Opción 3: Mostrar información del equipo
     if opcion == "3":
-        while opcion == "3":  # Continúa mientras siga en la opción 3
-            show_info()
-            time.sleep(2)
-            if opcion != "3":  # Verifica si cambió la opción
-                break
-            imprimir_logo()
-            time.sleep(2)
+        imprimir_logo()
+        time.sleep(2)
+        show_info()
+        time.sleep(2)
         return
     
     # Opción 4: Salir del programa
