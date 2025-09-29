@@ -49,15 +49,21 @@ def calcular_retardo_beeps(distancia):
     Calcula el retardo entre beeps basándose en la distancia detectada
     Fórmula aplicada: 
     - Si distancia < 50 cm: retardo = 0.1 segundos (beeps rápidos)
-    - Si distancia >= 50 cm: retardo = distancia * 0.01 segundos (proporcional)
-    - Máximo retardo limitado a 2 segundos para evitar beeps demasiado lentos
+    - Si distancia >= 50 cm: retardo = distancia * 0.005 segundos (proporcional)
+    
+    Ejemplos de la fórmula:
+    - 50 cm → 0.25 segundos
+    - 100 cm → 0.5 segundos  
+    - 200 cm → 1.0 segundo
+    - 400 cm → 2.0 segundos (máximo)
     """
     if distancia < 50:
         return 0.1  # Beeps rápidos para objetos cercanos
     else:
-        # Retardo proporcional: cada cm agrega 0.01 segundos de retardo
-        # Ejemplo: 100 cm = 1 segundo, 200 cm = 2 segundos
-        retardo = distancia * 0.01
+        # Retardo proporcional: distancia * 0.005 para cumplir con los ejemplos
+        # 100 cm * 0.005 = 0.5 segundos
+        # 200 cm * 0.005 = 1.0 segundo
+        retardo = distancia * 0.005
         return min(retardo, 2.0)  # Limita el retardo máximo a 2 segundos
 
 # Función para generar un beep con buzzer activo
@@ -72,20 +78,19 @@ def generar_beep_activo():
 
 # Función para reproducir una nota musical con buzzer pasivo (PWM)
 def tocar_nota(nota, duracion, tempo):
-    """
-    Reproduce una nota musical usando PWM en el buzzer pasivo
-    nota: clave del diccionario 'notas' (ej: 'C4', 'D4')
-    duracion: clave del diccionario 'duraciones' (ej: 'Negra', 'Corchea')
-    tempo: velocidad de reproducción en BPM (beats por minuto)
-    """
+    # Reproduce una nota musical usando PWM en el buzzer pasivo
+    # nota: clave del diccionario 'notas' (ej: 'C4', 'D4')
+    # duracion: clave del diccionario 'duraciones' (ej: 'Negra', 'Corchea')
+    # tempo: velocidad de reproducción en BPM (beats por minuto)
+
     frecuencia = notas[nota]  # Obtiene la frecuencia de la nota
-    tiempo_sonido = duraciones[duracion] * (60 / tempo)  # Calcula duración en segundos
+    tiempo_sonido = duraciones[duracion] * (60 / tempo)  # Calcula duración en segundos en base al tempo
 
     if frecuencia == 0:  # Silencio (nota 'V')
         time.sleep(tiempo_sonido)  # Pausa sin sonido
     else:
         # Configura PWM en el buzzer pasivo con la frecuencia de la nota
-        pwm = PWM(buzzer_pasivo_pin, freq=int(frecuencia), duty=512)  # duty=512 es 50% del ciclo
+        pwm = PWM(buzzer_pasivo_pin, freq=int(frecuencia), duty=512) 
         
         # Reproduce la nota durante el 80% del tiempo asignado
         time.sleep(tiempo_sonido * 0.8)
@@ -93,18 +98,14 @@ def tocar_nota(nota, duracion, tempo):
         # Detiene el PWM para terminar la nota
         pwm.deinit()
         
-        # Pausa breve entre notas (20% del tiempo restante)
+        # Pausa breve entre notas (20% del tiempo restante, para que se alcance a distinguir cada nota)
         time.sleep(tiempo_sonido * 0.2)
 
 # Función para reproducir la melodía completa cuando se detecta movimiento PIR
 def reproducir_melodia_pir():
-    """
-    Reproduce un fragmento de la canción "Secrets" de OneRepublic
-    Esta melodía se activa cuando el sensor PIR detecta movimiento
-    Incluye 95 notas con duraciones específicas a tempo de 150 BPM
-    """
-    print("Reproduciendo melodía PIR...")
-    
+    # Reproduce un fragmento de la canción "Secrets" de OneRepublic
+    # Esta melodía se activa cuando el sensor PIR detecta movimiento
+    # Incluye 95 notas con duraciones específicas a tempo de 150 BPM
     # Secuencia de notas de la melodía (fragmento de "Secrets" - OneRepublic)
     notas_melodia = ['D4', 'F#4', 'A4', 'F#4', 'D4', 'F#4', 'A4', 'F#4',
                      'D4', 'F#4', 'A4', 'F#4', 'D4', 'F#4', 'A4', 'F#4',
@@ -143,14 +144,10 @@ def reproducir_melodia_pir():
     for i in range(len(notas_melodia)):
         nota = notas_melodia[i]      # Nota actual de la secuencia
         duracion = duracion_melodia[i]  # Duración de la nota actual
-        tocar_nota(nota, duracion, 150)  # Reproduce la nota a 150 BPM
+        tocar_nota(nota, duracion, 150)  # Reproduce la nota con tempo de 150 
 
 # Función para escalar la matriz de alerta aumentando su tamaño por un factor específico
 def escale_matrix(matriz, factor):
-    """
-    Escala una matriz bidimensional aumentando cada píxel por el factor especificado
-    tanto horizontal como verticalmente
-    """
     salida = [] # Lista que almacenará la matriz escalada
     # Recorre cada fila de la matriz original
     for fila in matriz: 
@@ -166,11 +163,8 @@ def escale_matrix(matriz, factor):
 
 # Función para dibujar una imagen (matriz de píxeles) en la pantalla OLED en una posición específica
 def draw_simbol(oled, originx, originy, pic):
-    """
-    Dibuja una matriz de píxeles en la pantalla OLED
-    originx, originy: coordenadas de origen donde comenzar a dibujar
-    pic: matriz bidimensional que representa la imagen a dibujar
-    """
+    # originx, originy: coordenadas de origen donde comenzar a dibujar
+    # pic: matriz bidimensional que representa la imagen a dibujar
     # Coordenadas iniciales
     x = originx 
     y = originy
@@ -187,10 +181,6 @@ def draw_simbol(oled, originx, originy, pic):
 
 # Función que maneja la interrupción generada por el sensor PIR
 def handle_interrupt(pin):
-    """
-    Función de interrupción que se ejecuta cuando el sensor PIR detecta movimiento
-    Establece la bandera global motion_detected en True
-    """
     global motion_detected # Se llama a la variable global
     motion_detected = True # Establece la bandera a True cuando se detecta movimiento
 
@@ -210,10 +200,6 @@ oled = ssd1306.SSD1306_I2C(128, 64, i2c)
 
 # Función para imprimir el logo del Tecnológico
 def imprimir_logo():
-    """
-    Muestra el logo del Tecnológico en la pantalla OLED
-    Procesa la matriz de bytes del logo píxel por píxel
-    """
     oled.fill(0)# Limpia la pantalla
     # Recorre cada fila del logo
     for y, fila in enumerate(LOGO):
@@ -232,31 +218,25 @@ def imprimir_logo():
 
 # Función para mostrar información del equipo
 def mostrar_info():
-    """
-    Muestra información del equipo de desarrollo en la pantalla OLED
-    """
     oled.fill(0) # Limpia la pantalla
     oled.text('Sist.Programables', 0, 0)    # Materia
     oled.text('ISC', 0, 10)                 # Carrera
     oled.text('Equipo:', 0, 20)             # Etiqueta del equipo
     oled.text('Samuel J. Juarez B.', 0, 30) # Primer integrante
     oled.text('Ivan A. Cadena L.', 0, 40)   # Segundo integrante
-    oled.text('22/09/2025', 0, 50)          # Fecha del proyecto
+    oled.text('29/09/2025', 0, 50)          # Fecha del proyecto
     oled.show() # Actualiza la pantalla para mostrar la información
     time.sleep(5) # Pausa de 5 segundos para que la información sea visible
 
 # Función para mostrar el objetivo del proyecto
 def mostrar_objetivo():
-    """
-    Muestra el objetivo del proyecto en la pantalla OLED
-    """
     oled.fill(0) # Limpia la pantalla
-    oled.text("Objetivo:",0,0)                      # Título
-    oled.text("Sistema de monitoreo",0,10)          # Línea 1 del objetivo
-    oled.text("con sensor PIR,",0,20)               # Línea 2 del objetivo
-    oled.text("ultrasonico y buzzer",0,30)          # Línea 3 del objetivo
-    oled.text("con melodias y beeps",0,40)          # Línea 4 del objetivo
-    oled.text("proporcionales",0,50)                # Línea 5 del objetivo
+    oled.text("Objetivo:",0,0)                     
+    oled.text("Sistema de monitoreo",0,10)         
+    oled.text("con sensor PIR,",0,20)               
+    oled.text("ultrasonico y buzzer",0,30)          
+    oled.text("con melodias y beeps",0,40)          
+    oled.text("proporcionales",0,50)                
     oled.show() # Actualiza la pantalla para mostrar el objetivo
     time.sleep(5) # Pausa de 5 segundos para que el objetivo sea visible
 
@@ -269,13 +249,11 @@ mostrar_objetivo() # Muestra el objetivo de la práctica
 while True:
     # Verifica si la bandera de movimiento detectado está activada
     if motion_detected:
-        print("¡Movimiento detectado! Activando rutina de alerta...")
         
         # Rutina de alerta visual con efectos de pantalla
         oled.fill(0) # Limpia la pantalla
 
         # Reproduce la melodía completa en paralelo con la alerta visual
-        # Nota: En un sistema más avanzado, esto se podría hacer en paralelo con threading
         reproducir_melodia_pir()
 
         # Efecto de parpadeo de pantalla: enciende y apaga la pantalla 3 veces
@@ -309,8 +287,8 @@ while True:
         
     else: # Modo normal: monitoreo continuo cuando no hay movimiento detectado
         oled.fill(0) # Limpia la pantalla
-        oled.text("Detectando",0,0)      # Estado del sistema línea 1
-        oled.text("presencia...",0,10)   # Estado del sistema línea 2
+        oled.text("Detectando",0,0)      
+        oled.text("presencia...",0,10)   
     
         # Mide la distancia usando el sensor ultrasónico HC-SR04
         distancia = ultra.distance_cm() 
