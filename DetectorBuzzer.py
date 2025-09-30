@@ -2,6 +2,8 @@
 # Samuel Jafet Juárez Baliño
 # Iván Alejandro Cadena López
 
+# Fecha: 29/09/2025
+
 # Objetivo: Desarrollar un programa que implemente un sistema de monitoreo continuo utilizando un sensor ultrasónico 
 # y un sensor PIR (infrarrojo pasivo). El sistema deberá mostrar en la pantalla OLED la distancia a objetos en tiempo real,
 # emitir beeps cuya frecuencia dependa de la distancia detectada, y ante la detección de una fuente de calor, activar una 
@@ -36,27 +38,26 @@ buzzer_activo = Pin(25, Pin.OUT)
 # Configuración de buzzer pasivo para melodías (GPIO26)
 buzzer_pasivo_pin = Pin(26, Pin.OUT)
 
-# Diccionario de frecuencias de notas musicales para la melodía
+# Diccionario de frecuencias de notas musicales para la melodía, buscadas en internet
 notas = {'V': 0, 'G3': 196, 'B3': 247, 'C4':262 ,'C#4': 277, 'D4': 294, 'E4': 330, 'F4': 349, 
          'F#4': 370, 'G4': 392, 'A4': 440, 'B4': 494}
 
-# Diccionario de duraciones de notas musicales
+# Diccionario de duraciones de notas musicales, en base a la duración de cada tipo de nota
 duraciones = {'Redonda': 4, 'Blanca': 2, 'Negra': 1, 'NegraExt': 1.5, 'Corchea': 0.5, 'Semicorchea': 0.25, 'Fusa': 0.125}
 
 # Función para calcular el retardo entre beeps basado en la distancia
 def calcular_retardo_beeps(distancia):
-    """
-    Calcula el retardo entre beeps basándose en la distancia detectada
-    Fórmula aplicada: 
-    - Si distancia < 50 cm: retardo = 0.1 segundos (beeps rápidos)
-    - Si distancia >= 50 cm: retardo = distancia * 0.005 segundos (proporcional)
+    # Calcula el retardo entre beeps basándose en la distancia detectada
+    # Fórmula aplicada: 
+    # Si distancia < 50 cm: retardo = 0.1 segundos (beeps rápidos)
+    # Si distancia >= 50 cm: retardo = distancia * 0.005 segundos (proporcional)
     
-    Ejemplos de la fórmula:
-    - 50 cm → 0.25 segundos
-    - 100 cm → 0.5 segundos  
-    - 200 cm → 1.0 segundo
-    - 400 cm → 2.0 segundos (máximo)
-    """
+    # Ejemplos de la fórmula:
+    # 50 cm → 0.25 segundos
+    # 100 cm → 0.5 segundos  
+    # 200 cm → 1.0 segundo
+    # 400 cm → 2.0 segundos (máximo)
+    
     if distancia < 50:
         return 0.1  # Beeps rápidos para objetos cercanos
     else:
@@ -68,10 +69,7 @@ def calcular_retardo_beeps(distancia):
 
 # Función para generar un beep con buzzer activo
 def generar_beep_activo():
-    """
-    Genera un beep corto usando el buzzer activo
-    El buzzer activo solo requiere encendido/apagado (HIGH/LOW)
-    """
+    # El buzzer activo solo requiere encendido/apagado (HIGH/LOW)
     buzzer_activo.on()   # Enciende el buzzer
     time.sleep(0.1)      # Duración del beep: 100ms
     buzzer_activo.off()  # Apaga el buzzer
@@ -105,8 +103,7 @@ def tocar_nota(nota, duracion, tempo):
 def reproducir_melodia_pir():
     # Reproduce un fragmento de la canción "Secrets" de OneRepublic
     # Esta melodía se activa cuando el sensor PIR detecta movimiento
-    # Incluye 95 notas con duraciones específicas a tempo de 150 BPM
-    # Secuencia de notas de la melodía (fragmento de "Secrets" - OneRepublic)
+    # Secuencia de notas de la melodía
     notas_melodia = ['D4', 'F#4', 'A4', 'F#4', 'D4', 'F#4', 'A4', 'F#4',
                      'D4', 'F#4', 'A4', 'F#4', 'D4', 'F#4', 'A4', 'F#4',
                      'C#4', 'F#4', 'A4', 'F#4', 'A4', 'F#4', 'C#4', 'F#4',
