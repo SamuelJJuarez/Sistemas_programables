@@ -13,7 +13,7 @@ from machine import Pin, PWM
 import time # Se importa el módulo time para crear pausas y esperar a que el servo complete su movimiento
 
 # Configuración del pin GPIO4 como salida digital para controlar el servomotor
-servo_pin = Pin(4, machine.Pin.OUT)
+servo_pin = Pin(4, Pin.OUT)
 
 # Configuración del PWM (Modulación por Ancho de Pulso) en el pin del servomotor
 # PWM genera una señal de pulsos que controla la posición del servo
@@ -26,12 +26,16 @@ servo_pwm.freq(50)
 def set_servo_angle(angle):
     # Posiciona el servomotor en el ángulo especificado (0° a 180°) en base al ángulo recibido
     
-    # Calcula el ciclo de trabajo (duty cycle) necesario para el ángulo especificado
-    # Esta fórmula mapea el ángulo (0°-180°) al duty cycle apropiado (3%-8%)
-    duty_cycle = ((angle / 180) * 100) / 20 + 3
+    # Asegura que el ángulo no sea exactamente 180 para evitar errores en el cálculo del duty cycle
+    if angle == 180:
+        angle = 179
+
+    # Calcula el duty cycle en escala 0-1023 según el ángulo
+    # Esta fórmula mapea 0-180° al rango 26-128 (equivalente a 1ms-2ms)
+    duty_cycle = int((angle / 180) * (128 - 26) + 26)
     
     # Aplica el duty cycle calculado al PWM para mover el servo
-    servo_pwm.duty(int(duty_cycle))
+    servo_pwm.duty(duty_cycle)
     
     # Pausa de 500ms para permitir que el servomotor complete el movimiento
     time.sleep_ms(500)
